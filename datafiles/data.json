@@ -1,0 +1,143 @@
+{
+  "nodes": [
+    {
+      "data": {
+        "id": 0,
+        "name": "Animal",
+        "description": "",
+        "active": true,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 1,
+        "name": "Mammal",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 2,
+        "name": "Reptile",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 3,
+        "name": "Horse",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 4,
+        "name": "Dog",
+        "description": "Join",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 5,
+        "name": "Goat",
+        "description": "Branch Out",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 6,
+        "name": "Hound",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 7,
+        "name": "German Shepherd",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 8,
+        "name": "Hamster",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    },
+    {
+      "data": {
+        "id": 9,
+        "name": "Roger Rabbit",
+        "description": "",
+        "active": false,
+        "width": 140
+      }
+    }
+  ],
+  "edges": [{
+    "data": {
+      "source": 0,
+      "target": 1
+    }
+  },
+    {
+      "data": {
+        "source": 0,
+        "target": 2
+      }
+    },
+    {
+      "data": {
+        "source": 1,
+        "target": 3
+      }
+    },
+    {
+      "data": {
+        "source": 1,
+        "target": 4
+      }
+    },
+    {
+      "data": {
+        "source": 1,
+        "target": 5
+      }
+    },
+    {
+      "data": {
+        "source": 4,
+        "target": 6
+      }
+    },
+    {
+      "data": {
+        "source": 4,
+        "target": 7
+      }
+    },
+    {
+      "data": {
+        "source": 1,
+        "target": 8
+      }
+    }
+  ]
+}

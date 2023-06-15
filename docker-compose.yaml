@@ -1,0 +1,20 @@
+version: "3"
+services:
+  cytoscape-vis:
+    build:
+      context: visualiser/.
+    image: cytoscape-vis
+    restart: unless-stopped
+    ports:
+      - "80:80"
+  simple-rest:
+    build:
+      context: simplerest/.
+    image: simple-rest
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - "/home/niall/projects/cytoscape-vis/datafiles:/datafiles:ro"
+volumes:
+  datafiles:
