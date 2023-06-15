@@ -1,9 +1,17 @@
+<<<<<<< HEAD
 Simple vue app using cytoscape.js and menu components to create a basic editor.
 
 To build and run the containers invidually.
 
 The cytoscape node visualiser
 
+=======
+To build and run the containers invidually
+
+The cytoscape node visualiser
+
+Simple vue app using cytoscape.js and menu components to create a basic editor. 
+>>>>>>> 81de4dda14dd700f1a30dda1327d6678db095fc0
 
 ```
 cd visualiser/
