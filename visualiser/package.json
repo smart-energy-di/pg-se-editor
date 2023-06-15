@@ -1,0 +1,53 @@
+{
+  "name": "vue",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@kiyoaki_w/vue-context": "^1.0.3",
+    "@vue/cli-plugin-babel": "^5.0.8",
+    "axios": "^1.4.0",
+    "browserify-fs": "^1.0.0",
+    "cytoscape": "3.20.0",
+    "cytoscape-context-menus": "^4.1.0",
+    "cytoscape-dagre": "2.3.2",
+    "cytoscape-edgehandles": "^4.0.1",
+    "cytoscape-popper": "^2.0.0",
+    "node-sass": "^9.0.0",
+    "sass-loader": "^13.3.1",
+    "vue": "^2.6.11",
+    "vue-cytoscape": "^1.0.8"
+  },
+  "devDependencies": {
+    "@vue/cli-service": "^5.0.8",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^6.0.1",
+    "vue-template-compiler": "^2.7.14"
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ],
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false
+  },
+  "keywords": [
+    "vue",
+    "vuejs",
+    "starter"
+  ],
+  "description": "Vue.js example starter project"
+}
