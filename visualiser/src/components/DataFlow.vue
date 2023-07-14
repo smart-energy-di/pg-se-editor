@@ -9,6 +9,11 @@
       <h4 v-if="error" className="text-danger">{{ error }}</h4>
     </div>
 
+    <div className="popup-box" id="popup-box" size="small">
+    </div>
+
+    <div id="cy" className="cy"></div>
+
     <div id="cy" className="cy"></div>
 
   </div>
@@ -23,6 +28,40 @@
 #cy {
   height: 1000px;
   width: 2000px;
+}
+
+#popup-box .modal {
+  display: flex;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+#popup-box .modal-content {
+  background-color: #fefefe;
+  width: 80%;
+  height: 80%;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+#popup-box .nodedetails {
+  padding: 2%;
+}
+
+#popup-box .buttonbar {
+  padding: 2%;
+  margin-right: 5%;
+  margin-bottom: 2%;
+  display: inline-block;
+  width: 100%;
 }
 </style>
 
@@ -328,6 +367,215 @@ export default {
       let contextMenu = cy.contextMenus({
         menuItems: [
           {
+            id: 'edit-node',
+            content: 'view / edit properties',
+            coreAsWell: false,
+            image: {src: "../assets/edit.svg", width: 12, height: 12, x: 6, y: 4},
+            selector: 'node',
+            onClickFunction: function (event) {
+              let node2edit = event.target || event.cyTarget;
+              let node2editdata = node2edit.json().data
+
+
+              const editNode = (label) => {
+
+                function compare(original, copy) {
+                  for (let [k, v] of Object.entries(original)) {
+                    if (typeof v === "object" && v !== null) {
+                      if (!copy.hasOwnProperty(k)) {
+                        copy[k] = v;
+                      } else {
+                        compare(v, copy?.[k]);
+                      }
+                    } else {
+                      if (Object.is(v, copy?.[k])) {
+                        delete copy?.[k];
+                      }
+                    }
+                  }
+                  return copy;
+                }
+
+                const diff = compare(node2editdata, JSON.parse(JSON.stringify(self.nodedata)));
+
+                for (let [key, value] of Object.entries(diff)) {
+                  node2edit.data(key, value)
+                }
+              }
+
+              const addProperty = () => {
+                const div2append = document.querySelector('#customprops')
+                const row = document.createElement('row')
+                row.addClass='row'
+                div2append.appendChild(row)
+                const propname = document.createElement('input');
+                const propvalue = document.createElement('input');
+                propname.setAttribute('name', 'propname')
+                propvalue.setAttribute('name', 'propvalue')
+                propname.setAttribute('id', Date.now().toString())
+                propvalue.setAttribute('id', Date.now().toString())
+                propname.setAttribute('placeholder', 'Enter the name of your property')
+                propvalue.setAttribute('placeholder', 'Enter the value of your property')
+                propvalue.className = 'float-right'
+                row.appendChild(propname)
+                propname.focus()
+                row.appendChild(propvalue)
+                const addPropBtn = document.getElementById("addPropBtn")
+                addPropBtn.textContent = "Add another"
+              }
+
+              const asyncConfirm = (text) => {
+                return new Promise(resolve => {
+
+                  const wrapper = document.querySelector('#popup-box');
+                  const editor = document.createElement('div');
+                  editor.className = 'modal'
+                  wrapper.appendChild(editor)
+
+                  const modalheader = document.createElement('h4')
+                  const modalcontent = document.createElement('div')
+                  const nodedetails = document.createElement('div')
+                  const buttonbar = document.createElement('div')
+                  const existingprops = document.createElement('div')
+                  existingprops.className = "row col-sm-12 col-md-12 col-lg-12"
+                  existingprops.id = 'customprops'
+                  modalheader.className='modal-title'
+                  modalheader.textContent = ('Edit node')
+                  nodedetails.className = 'nodedetails col-sm-4 col-md-4 col-lg-4'
+                  modalcontent.className='modal-content'
+                  buttonbar.className='buttonbar'
+                  editor.appendChild(modalcontent)
+                  modalcontent.appendChild(modalheader)
+                  modalcontent.appendChild(nodedetails)
+                  nodedetails.appendChild(existingprops)
+                  modalcontent.append(buttonbar)
+
+                  const okBtn = document.createElement('button');
+                  const cancelBtn = document.createElement('button');
+                  const editBtn = document.createElement('button');
+                  okBtn.textContent = 'Ok';
+                  editBtn.textContent = 'Edit Node'
+                  editBtn.id = 'editBtn'
+                  cancelBtn.textContent = 'Cancel';
+
+
+                  for (let [key, value] of Object.entries(node2editdata)) {
+                    if (key == "width" || key == "id") {
+                      continue
+                    }
+                    const row = document.createElement('row')
+                    row.addClass='row'
+                    existingprops.appendChild(row)
+                    const nodename = document.createElement('input');
+                    const nodedescription = document.createElement('input');
+
+                    if ( key == "name" ) {
+                      nodename.setAttribute('readonly', true)
+                    }
+                    nodename.setAttribute("name", key)
+                    nodename.value = key
+                    nodedescription.setAttribute("name", value)
+                    nodedescription.setAttribute('readonly', true)
+
+                    nodedescription.value = value
+                    row.appendChild(nodename)
+                    row.appendChild(nodedescription)
+                  }
+
+                  buttonbar.appendChild(okBtn)
+                  buttonbar.appendChild(editBtn)
+                  buttonbar.appendChild(cancelBtn)
+
+
+
+                  const onClick = pass => {
+                    resolve(pass);
+
+                    if (pass != false) {
+                      const div2edit = document.querySelector('#customprops')
+                      let inputs = div2edit.getElementsByTagName('input');
+                      let rows = div2edit.getElementsByClassName('row')
+                      var values = {}
+                      var itemname
+                      var itemvalue
+                      let entryArray = Array.from(inputs)
+
+                      for (let i = 0; i < entryArray.length - 1; i++) {
+                        itemname = entryArray[i].value
+                        itemvalue = entryArray[i + 1].value
+                        i++
+
+                        if (itemname != '') {
+                          values[itemname] = itemvalue
+                        }
+                      }
+                      self.nodedata = values
+
+                    }
+
+                    editor.remove()
+
+                  };
+                  const toggle = (action) => {
+
+                    const div2edit = document.querySelector('#customprops')
+                    const editBtn = document.getElementById('editBtn')
+                    let inputs = div2edit.getElementsByTagName('input');
+                    let entryArray = Array.from(inputs)
+
+                    if (action == 'View'){
+                      entryArray.forEach(function (input) {
+                        if (input.name == 'name' )
+                        {
+                          return
+                        }
+                        input.readOnly = true
+                      })
+                      const addPropBtn = document.getElementById('addPropBtn')
+                      editBtn.textContent = 'Edit Node'
+                      buttonbar.insertBefore(addPropBtn, cancelBtn)
+                      addPropBtn.parentNode.removeChild(addPropBtn)
+                    }
+
+                    if (action == "Edit Node") {
+                      entryArray.forEach(function (input) {
+                        if (input.name == "name" )
+                        {
+                          return
+                        }
+                        input.readOnly = false
+                      })
+
+                      const addPropBtn = document.createElement('button');
+                      addPropBtn.textContent = 'Add Property';
+                      addPropBtn.id = "addPropBtn"
+                      addPropBtn.addEventListener('click', addProperty)
+                      buttonbar.appendChild(addPropBtn)
+                      editBtn.textContent = "View"
+                    }
+                  }
+
+                  okBtn.addEventListener('click', onClick.bind(null, true));
+                  editBtn.addEventListener('click', function () {
+                    toggle(editBtn.textContent)
+
+                  })
+                  cancelBtn.addEventListener('click', onClick.bind(null, false));
+
+                })
+              };
+
+
+              const run = async () => {
+                if (await asyncConfirm(node2editdata)) {
+                  editNode('💡Item');
+                }
+              }
+              run()
+
+            } //end onclick
+          },
+          {
             id: 'addconnection',
             content: 'Add connection',
             tooltipText: 'Add connection',
@@ -430,27 +678,183 @@ export default {
             tooltipText: 'add node',
             image: {src: "../assets/add.svg", width: 12, height: 12, x: 6, y: 4},
             coreAsWell: true,
+
             onClickFunction: function (event) {
-              let text;
-              let nodename = prompt("Please enter a node name:", "");
-              if (nodename == null || nodename == "") {
-                return;
-              } else {
-                text = nodename;
+              const addNode = () => {
+                let pos = event.position || event.cyPosition;
+                if (self.nodedata.name != '') {
+                  cy.add({
+                    group: 'nodes',
+                    data: self.nodedata,
+                    position: {
+                      x: pos.x,
+                      y: pos.y
+                    },
+                  });
+                }
               }
 
-              let nodedata = {name: text, description: "", active: false, width: 140};
+              const addProperty = () => {
+                const div2append = document.querySelector('div.nodedetails')
+                const inputdiv = document.createElement('div')
+                const row = document.createElement('div')
+                const col =  document.createElement('div')
+                const col2 =  document.createElement('div')
+                inputdiv.className = 'col-sm-12 col-md-12 col-lg-12'
+                inputdiv.id = 'customprops'
+                row.className = 'row'
+                col.className = 'col-sm-3 col-md-3 col-lg-3'
+                col2.className = 'col-sm-3 col-md-3 col-lg-3'
+                div2append.appendChild(row)
 
-              let pos = event.position || event.cyPosition;
+                const propname = document.createElement('input');
+                const propvalue = document.createElement('input');
+                const labelpropname = document.createElement('label');
+                const labelproptext = document.createTextNode("Property name")
+                const labelpropvalue = document.createElement('label');
+                const labelpropvaltext = document.createTextNode("Property value")
+                propname.setAttribute('name', 'propname')
+                propvalue.setAttribute('name', 'propvalue')
+                propname.setAttribute('id', Date.now().toString())
+                propvalue.setAttribute('id', Date.now().toString())
+                propname.setAttribute('placeholder', 'Enter the name of your property')
+                propvalue.setAttribute('placeholder', 'Enter the value of your property')
 
-              cy.add({
-                group: 'nodes',
-                data: nodedata,
-                position: {
-                  x: pos.x,
-                  y: pos.y
-                },
-              });
+                row.appendChild(col)
+                col.appendChild(labelpropname)
+                col.append(labelproptext)
+                col.appendChild(propname)
+                row.appendChild(col2)
+                propname.focus()
+                col2.appendChild(labelpropvalue)
+                col2.appendChild(labelpropvaltext)
+                col2.appendChild(propvalue)
+                const addPropBtn = document.getElementById("addPropBtn")
+                addPropBtn.textContent = "Add another"
+              }
+
+              const asyncConfirm = (text) => {
+                return new Promise(resolve => {
+                  const wrapper = document.querySelector('#popup-box');
+                  const popup = document.createElement('div');
+                  const row = document.createElement('div');
+                  const rowcol = document.createElement('div');
+                  const col1 = document.createElement('div');
+                  const col2 = document.createElement('div');
+                  rowcol.className = 'col-sm-12 col-md-12 col-lg-12'
+                  row.className = 'row'
+                  col1.className = 'col-sm-3 col-md-3 col-lg-3'
+                  col2.className = 'col-sm-3 col-md-3 col-lg-3'
+                  popup.classList.add('modal');
+                  wrapper.appendChild(popup);
+                  popup.textContent = text;
+                  const modalheader = document.createElement('h4')
+                  const modalcontent = document.createElement('div')
+                  const nodedetails = document.createElement('div')
+                  const buttonbar = document.createElement('div')
+                  modalheader.className = 'modal-title'
+                  modalheader.textContent = ('Add a new node')
+                  nodedetails.className = 'nodedetails'
+                  modalcontent.className = 'modal-content'
+                  buttonbar.className = 'buttonbar'
+                  popup.appendChild(modalcontent)
+                  modalcontent.appendChild(modalheader)
+
+                  const nodename = document.createElement('input');
+                  const labelnodename = document.createElement('label');
+                  const labelnodetext = document.createTextNode("Node name")
+                  const nodedescription = document.createElement('input');
+                  const labeldescription = document.createElement('label');
+                  const labeldesctext = document.createTextNode("Node description")
+                  nodename.setAttribute("name", "nodename")
+                  labelnodename.setAttribute("for", "nodename")
+                  nodedescription.setAttribute("name", "nodedescription")
+                  labeldescription.setAttribute("for", "nodedescription")
+
+                  const addPropBtn = document.createElement('button');
+                  const okBtn = document.createElement('button');
+                  const cancelBtn = document.createElement('button');
+                  addPropBtn.id = 'addPropBtn'
+                  addPropBtn.textContent = 'Add Property';
+                  okBtn.textContent = 'Save Info';
+                  cancelBtn.textContent = 'Cancel';
+
+                  modalcontent.appendChild(nodedetails)
+                  nodedetails.appendChild(rowcol)
+                  rowcol.appendChild(row)
+                  row.appendChild(col1)
+                  col1.appendChild(labelnodename)
+                  col1.appendChild(labelnodetext)
+                  col1.appendChild(nodename)
+                  col1.appendChild(labelnodename)
+
+                  nodename.focus()
+                  row.appendChild(col2)
+                  col2.appendChild(labeldescription)
+                  col2.appendChild(labeldesctext)
+                  col2.appendChild(nodedescription)
+                  modalcontent.appendChild(buttonbar)
+                  buttonbar.appendChild(okBtn);
+                  buttonbar.appendChild(addPropBtn)
+                  buttonbar.appendChild(cancelBtn);
+
+
+                  const onClick = (pass) => {
+                    resolve(pass);
+
+                    if (pass != false) {
+                      const div2edit = document.querySelector('div.nodedetails')
+                      let inputs = div2edit.getElementsByTagName('input');
+                      let rows = div2edit.getElementsByClassName('row')
+                      var values = {}
+                      var itemname
+                      var itemvalue
+                      let entryArray = Array.from(inputs)
+
+                      for (let i = 0; i < entryArray.length; i++) {
+                        if (entryArray[i].name == "nodename") {
+                          itemname = 'name'
+                          itemvalue = entryArray[i].value
+
+                        } else if (entryArray[i].name == "nodedescription") {
+                          itemname = 'nodedescription'
+                          itemvalue = entryArray[i].value
+                        } else {
+                          itemname = entryArray[i].value
+                          itemvalue = entryArray[i + 1].value
+                          i++
+                        }
+
+                        if (itemname != '') {
+                          values[itemname] = itemvalue
+                        }
+                      }
+                      values['active'] = false
+                      values['width'] = 140
+                      self.nodedata = values
+
+                    }
+
+                    popup.remove()
+
+                  }
+
+                  addPropBtn.addEventListener('click', addProperty.bind(null, false));
+                  addPropBtn.textContent = 'Add a property'
+                  okBtn.addEventListener('click', onClick.bind(null, self.nodedata));
+                  cancelBtn.addEventListener('click', onClick.bind(true, false));
+
+                })
+              }
+
+
+                const run = async () => {
+                if (await asyncConfirm('Add new node')) {
+                  addNode(self.nodedata);
+                }
+              }
+              self.nodedata = {}
+              run()
 
             }
           },
