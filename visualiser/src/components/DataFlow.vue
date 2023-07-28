@@ -31,29 +31,32 @@
 }
 
 #popup-box .modal {
-  display: flex;
-  position: fixed;
-  z-index: 1;
+  display: flex; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
   left: 0;
   top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
   background-color: rgb(0, 0, 0); /* Fallback color */
   background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
 }
 
 #popup-box .modal-content {
   background-color: #fefefe;
-  width: 80%;
+  left: 25%;
+  width: 50%;
   height: 80%;
   padding: 20px;
   border: 1px solid #888;
-  width: 80%;
+  /* Could be more or less, depending on screen size */
 }
 
 #popup-box .nodedetails {
-  padding: 2%;
+  min-height: 40px;
+  text-align:center;
+  margin: 1px;
 }
 
 #popup-box .buttonbar {
@@ -62,6 +65,16 @@
   margin-bottom: 2%;
   display: inline-block;
   width: 100%;
+}
+
+#popup-box .selected {
+  background-color: gainsboro;
+  border-color: red;
+}
+.selectdeleteimg {
+  width: 24px;
+  height: 24px;
+  fill: red;
 }
 </style>
 
@@ -134,7 +147,7 @@ export default {
     drawGraph: function (jsonData) {
       const bmd = document.getElementById("btnExportJson").addEventListener("click", savedata);
       let dispLayout = 'dagre';
-      if (jsonData.nodes.some(obj => obj.hasOwnProperty("position"))) {
+      if (jsonData.elements.nodes.some(obj => obj.hasOwnProperty("position"))) {
         dispLayout = 'preset';
       }
       cydagre(cytoscape);
@@ -204,8 +217,8 @@ export default {
             .selector(".eh-ghost-edge.eh-preview-active")
             .css({'opacity': 0}),
         elements: {
-          nodes: jsonData.nodes,
-          edges: jsonData.edges,
+          nodes: jsonData.elements.nodes,
+          edges: jsonData.elements.edges,
         },
         layout: {
           name: dispLayout,
@@ -376,7 +389,6 @@ export default {
               let node2edit = event.target || event.cyTarget;
               let node2editdata = node2edit.json().data
 
-
               const editNode = (label) => {
 
                 function compare(original, copy) {
@@ -396,17 +408,39 @@ export default {
                   return copy;
                 }
 
-                const diff = compare(node2editdata, JSON.parse(JSON.stringify(self.nodedata)));
+                console.log("%%%% ", self.nodedata)
 
-                for (let [key, value] of Object.entries(diff)) {
-                  node2edit.data(key, value)
+                const diff = compare(node2editdata, JSON.parse(JSON.stringify(self.nodedata)));
+                console.log("$$$$$ ", diff)
+
+                if (Object.keys(diff).length  !== 0 ) {
+                  console.log ("Action - ", Object.keys(diff).length )
+                  node2edit.data(self.nodedata);
                 }
               }
 
               const addProperty = () => {
+
                 const div2append = document.querySelector('#customprops')
-                const row = document.createElement('row')
-                row.addClass='row'
+                const numrows = div2append.childNodes.length + 1
+                const row = document.createElement('div')
+                const col1 = document.createElement('div')
+                const col2 = document.createElement('div')
+                const col3 = document.createElement('div')
+                const selectdelete = document.createElement('span')
+                const img = document.createElement('img')
+
+                row.className='row'
+                row.id = numrows
+                col1.className="col-sm-3 col-md-3 col-lg-3"
+                col2.className="col-sm-3 col-md-3 col-lg-3"
+                col3.className="col-sm-3 col-md-3 col-lg-3"
+
+                img.setAttribute("img src", "../assets/remove.svg")
+                img.classList.add('selectdeleteimg')
+                selectdelete.addEventListener('click', toggleSelect.bind(null, numrows, '#customprops'))
+                selectdelete.appendChild(img)
+
                 div2append.appendChild(row)
                 const propname = document.createElement('input');
                 const propvalue = document.createElement('input');
@@ -416,17 +450,48 @@ export default {
                 propvalue.setAttribute('id', Date.now().toString())
                 propname.setAttribute('placeholder', 'Enter the name of your property')
                 propvalue.setAttribute('placeholder', 'Enter the value of your property')
-                propvalue.className = 'float-right'
-                row.appendChild(propname)
+                row.appendChild(col1)
+                col1.appendChild(propname)
                 propname.focus()
-                row.appendChild(propvalue)
+                row.appendChild(col2)
+                col2.appendChild(propvalue)
+                row.appendChild(col3)
+                col3.appendChild(selectdelete)
                 const addPropBtn = document.getElementById("addPropBtn")
+                const editBtn = document.getElementById("editBtn")
                 addPropBtn.textContent = "Add another"
+                editBtn.disabled = true
+
+              }
+
+              const toggleSelect = (rowindex, divtag) => {
+                const divofintrest = document.querySelector( divtag)
+                const selectedrow = divofintrest.childNodes[rowindex]
+                const okBtn = document.getElementById('okBtn');
+                const editBtn = document.getElementById('editBtn');
+                if ( selectedrow.classList.contains('selected')){
+                  selectedrow.classList.remove('selected', 'border', 'border-danger')
+                  for (const childnode of divofintrest.childNodes) {
+                    if (childnode.classList.contains('selected')) {
+                      okBtn.textContent = 'Save Changes'
+                      editBtn.disabled = true
+                      break
+                    } else {
+                      okBtn.textContent = 'OK'
+                      editBtn.disabled = false
+                    }
+                  }
+                }
+                else
+                {
+                  selectedrow.classList.add('selected', 'border', 'border-danger')
+                  okBtn.textContent = 'Save Changes'
+                  editBtn.disabled = true
+                }
               }
 
               const asyncConfirm = (text) => {
                 return new Promise(resolve => {
-
                   const wrapper = document.querySelector('#popup-box');
                   const editor = document.createElement('div');
                   editor.className = 'modal'
@@ -437,11 +502,11 @@ export default {
                   const nodedetails = document.createElement('div')
                   const buttonbar = document.createElement('div')
                   const existingprops = document.createElement('div')
-                  existingprops.className = "row col-sm-12 col-md-12 col-lg-12"
+                  existingprops.className = "row col-sm-8 col-md-8 col-lg-8"
                   existingprops.id = 'customprops'
                   modalheader.className='modal-title'
-                  modalheader.textContent = ('Edit node')
-                  nodedetails.className = 'nodedetails col-sm-4 col-md-4 col-lg-4'
+                  modalheader.textContent = ('View node properties')
+                  nodedetails.className = 'nodedetails'
                   modalcontent.className='modal-content'
                   buttonbar.className='buttonbar'
                   editor.appendChild(modalcontent)
@@ -454,17 +519,24 @@ export default {
                   const cancelBtn = document.createElement('button');
                   const editBtn = document.createElement('button');
                   okBtn.textContent = 'Ok';
+                  okBtn.id = 'okBtn'
                   editBtn.textContent = 'Edit Node'
                   editBtn.id = 'editBtn'
                   cancelBtn.textContent = 'Cancel';
 
 
-                  for (let [key, value] of Object.entries(node2editdata)) {
-                    if (key == "width" || key == "id") {
+                  for (const [index, [key, value]] of Object.entries(Object.entries(node2editdata))) {
+                    if (key == "width" || key == "id" || value == "undefined") {
                       continue
                     }
-                    const row = document.createElement('row')
-                    row.addClass='row'
+                    console.log(key, value);
+                    const row = document.createElement('div')
+                    const col1 = document.createElement('div')
+                    const col2 = document.createElement('div')
+                    col1.className = 'col-sm-3 col-md-3 col-lg-3'
+                    col2.className = 'col-sm-3 col-md-3 col-lg-3'
+                    row.className='row'
+                    row.id = index
                     existingprops.appendChild(row)
                     const nodename = document.createElement('input');
                     const nodedescription = document.createElement('input');
@@ -478,8 +550,10 @@ export default {
                     nodedescription.setAttribute('readonly', true)
 
                     nodedescription.value = value
-                    row.appendChild(nodename)
-                    row.appendChild(nodedescription)
+                    row.append(col1)
+                    col1.appendChild(nodename)
+                    row.append(col2)
+                    col2.appendChild(nodedescription)
                   }
 
                   buttonbar.appendChild(okBtn)
@@ -493,78 +567,106 @@ export default {
 
                     if (pass != false) {
                       const div2edit = document.querySelector('#customprops')
+                      let rows = Array.from(div2edit.getElementsByClassName('row'))
                       let inputs = div2edit.getElementsByTagName('input');
-                      let rows = div2edit.getElementsByClassName('row')
-                      var values = {}
-                      var itemname
-                      var itemvalue
-                      let entryArray = Array.from(inputs)
+                      var nodename
+                      var newpropertyobj = {}
 
-                      for (let i = 0; i < entryArray.length - 1; i++) {
-                        itemname = entryArray[i].value
-                        itemvalue = entryArray[i + 1].value
-                        i++
-
-                        if (itemname != '') {
-                          values[itemname] = itemvalue
+                      rows.forEach(function (row){
+                        console.log('row', row)
+                        if ( row.classList.contains('selected')) {
+                          newpropertyobj[row.childNodes[0].childNodes[0].value] = 'undefined'
+                          console.log("miss")
                         }
-                      }
-                      self.nodedata = values
-
+                        else {
+                          if (row.childNodes[0].childNodes[0].value == "active") {
+                            newpropertyobj[row.childNodes[0].childNodes[0].value] = (row.childNodes[1].childNodes[0].value==='true')
+                          }
+                          else if (row.childNodes[0].childNodes[0].value != '') {
+                            newpropertyobj[row.childNodes[0].childNodes[0].value] = row.childNodes[1].childNodes[0].value
+                          }
+                        }
+                      })
                     }
 
+                    self.nodedata = newpropertyobj
+                    console.log("!!!! ", newpropertyobj)
+                    console.log("!!!! ", self.nodedata)
                     editor.remove()
 
                   };
                   const toggle = (action) => {
-
+                    const modaltitle = document.getElementsByClassName('modal-title')
                     const div2edit = document.querySelector('#customprops')
+                    const proprows = div2edit.childNodes
                     const editBtn = document.getElementById('editBtn')
                     let inputs = div2edit.getElementsByTagName('input');
                     let entryArray = Array.from(inputs)
 
-                    if (action == 'View'){
-                      entryArray.forEach(function (input) {
-                        if (input.name == 'name' )
-                        {
-                          return
-                        }
-                        input.readOnly = true
-                      })
-                      const addPropBtn = document.getElementById('addPropBtn')
-                      editBtn.textContent = 'Edit Node'
-                      buttonbar.insertBefore(addPropBtn, cancelBtn)
-                      addPropBtn.parentNode.removeChild(addPropBtn)
-                    }
-
-                    if (action == "Edit Node") {
+                    if (action == "View"){
+                      modaltitle[0].textContent = 'View node properties'
                       entryArray.forEach(function (input) {
                         if (input.name == "name" )
                         {
                           return
                         }
+                        input.readOnly = true
+                      })
+
+                      proprows.forEach(function ( row, index) {
+                        if (row.childNodes[0].childNodes[0].value != 'name') {
+                          row.removeEventListener('click', toggleSelect.bind(null, index, '#customprops'))
+                          const selectdelete = document.getElementById('selectdelete' + index)
+                          selectdelete.parentNode.removeChild(selectdelete)
+                        }
+                      })
+                      const addPropBtn = document.getElementById('addPropBtn')
+                      editBtn.textContent = "Edit Node"
+                      addPropBtn.parentNode.removeChild(addPropBtn)
+
+                    }
+
+                    if (action == 'Edit Node') {
+                      modaltitle[0].textContent = 'Edit node properties'
+                      entryArray.forEach(function ( input) {
+                        if (input.name == 'name' )
+                        {
+                          return
+                        }
                         input.readOnly = false
+                      })
+                      proprows.forEach(function ( row, index) {
+                        if (row.childNodes[0].childNodes[0].value != 'name') {
+                          const selectdelete = document.createElement('span')
+                          const col3 = document.createElement('div')
+                          const img = document.createElement('img')
+                          selectdelete.id = 'selectdelete' + index
+                          img.setAttribute("src", "../assets/remove.svg")
+                          img.classList.add('selectdeleteimg')
+                          selectdelete.addEventListener('click', toggleSelect.bind(null, index, '#customprops'))
+                          col3.className = 'col-sm-3 col-md-3 col-lg-3'
+                          selectdelete.appendChild(img)
+                          row.appendChild(col3)
+                          col3.appendChild(selectdelete)
+                        }
                       })
 
                       const addPropBtn = document.createElement('button');
                       addPropBtn.textContent = 'Add Property';
                       addPropBtn.id = "addPropBtn"
                       addPropBtn.addEventListener('click', addProperty)
-                      buttonbar.appendChild(addPropBtn)
-                      editBtn.textContent = "View"
+                      buttonbar.insertBefore(addPropBtn, cancelBtn)
+                      editBtn.textContent = 'View'
                     }
                   }
 
                   okBtn.addEventListener('click', onClick.bind(null, true));
                   editBtn.addEventListener('click', function () {
                     toggle(editBtn.textContent)
-
                   })
                   cancelBtn.addEventListener('click', onClick.bind(null, false));
-
                 })
               };
-
 
               const run = async () => {
                 if (await asyncConfirm(node2editdata)) {
@@ -573,7 +675,7 @@ export default {
               }
               run()
 
-            } //end onclick
+            }
           },
           {
             id: 'addconnection',
@@ -680,7 +782,7 @@ export default {
             coreAsWell: true,
 
             onClickFunction: function (event) {
-              const addNode = () => {
+              const addItem = () => {
                 let pos = event.position || event.cyPosition;
                 if (self.nodedata.name != '') {
                   cy.add({
@@ -696,13 +798,15 @@ export default {
 
               const addProperty = () => {
                 const div2append = document.querySelector('div.nodedetails')
+                const numrows = div2append.childNodes.length
                 const inputdiv = document.createElement('div')
                 const row = document.createElement('div')
                 const col =  document.createElement('div')
                 const col2 =  document.createElement('div')
-                inputdiv.className = 'col-sm-12 col-md-12 col-lg-12'
+                inputdiv.className = 'col-sm-8 col-md-8 col-lg-8'
                 inputdiv.id = 'customprops'
                 row.className = 'row'
+                row.id = numrows
                 col.className = 'col-sm-3 col-md-3 col-lg-3'
                 col2.className = 'col-sm-3 col-md-3 col-lg-3'
                 div2append.appendChild(row)
@@ -741,7 +845,7 @@ export default {
                   const rowcol = document.createElement('div');
                   const col1 = document.createElement('div');
                   const col2 = document.createElement('div');
-                  rowcol.className = 'col-sm-12 col-md-12 col-lg-12'
+                  rowcol.className = 'col-sm-3 col-md-6 col-lg-6'
                   row.className = 'row'
                   col1.className = 'col-sm-3 col-md-3 col-lg-3'
                   col2.className = 'col-sm-3 col-md-3 col-lg-3'
@@ -752,11 +856,11 @@ export default {
                   const modalcontent = document.createElement('div')
                   const nodedetails = document.createElement('div')
                   const buttonbar = document.createElement('div')
-                  modalheader.className = 'modal-title'
+                  modalheader.className='modal-title'
                   modalheader.textContent = ('Add a new node')
                   nodedetails.className = 'nodedetails'
-                  modalcontent.className = 'modal-content'
-                  buttonbar.className = 'buttonbar'
+                  modalcontent.className='modal-content'
+                  buttonbar.className='buttonbar'
                   popup.appendChild(modalcontent)
                   modalcontent.appendChild(modalheader)
 
@@ -837,7 +941,7 @@ export default {
 
                     popup.remove()
 
-                  }
+                  };
 
                   addPropBtn.addEventListener('click', addProperty.bind(null, false));
                   addPropBtn.textContent = 'Add a property'
@@ -845,12 +949,12 @@ export default {
                   cancelBtn.addEventListener('click', onClick.bind(true, false));
 
                 })
-              }
+              };
 
 
-                const run = async () => {
+              const run = async () => {
                 if (await asyncConfirm('Add new node')) {
-                  addNode(self.nodedata);
+                  addItem(self.nodedata);
                 }
               }
               self.nodedata = {}
@@ -916,29 +1020,24 @@ export default {
 
       function savedata() {
 
-        let dataofinterest = Object.values(cy.elements().jsons());
-        let dataofinterest2 = Object.values(cy.nodes().jsons());
-        const data1 = {}
-        data1.nodes = [];
-        data1.edges = [];
-        dataofinterest.forEach(function (item, index) {
-          if (item.group == 'nodes') {
-            data1.nodes.push(item);
-          }
-          if (item.group == 'edges') {
-            delete item['data'].id;
-            data1.edges.push(item);
-          }
+        let dataToExport = cy.json()
+
+        Object.entries(dataToExport.elements.nodes).forEach(([key, value]) => {
+          Object.entries(value.data).forEach(([k,v]) => {
+            if (v == 'undefined') {
+              delete(dataToExport.elements.nodes[key].data[k])
+            }
+          })
         });
 
-        const fixed = JSON.stringify(data1, (key, value) => {
+        const fixedDataToExport = JSON.stringify(dataToExport, (key, value) => {
           if (!isNaN(value) && value !== "" && typeof value != "boolean")
             value = Number(value)
           return value
         })
 
         let tzstamp = new Date().toISOString().slice(0, 19).replace(new RegExp(/T|:+/g, "gm"), "-");
-        const blob = new Blob([fixed], {type: 'application/json charset=utf-8'});
+        const blob = new Blob([fixedDataToExport], {type: 'application/json charset=utf-8'});
         const e = document.createEvent('MouseEvents'),
             a = document.createElement('a');
         a.download = "cyto-data" + tzstamp + ".json";
