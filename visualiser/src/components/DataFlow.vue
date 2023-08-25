@@ -436,7 +436,7 @@ export default {
                 col2.className="col-sm-3 col-md-3 col-lg-3"
                 col3.className="col-sm-3 col-md-3 col-lg-3"
 
-                img.setAttribute("img src", "../assets/remove.svg")
+                img.setAttribute("src", "../assets/remove.svg")
                 img.classList.add('selectdeleteimg')
                 selectdelete.addEventListener('click', toggleSelect.bind(null, numrows, '#customprops'))
                 selectdelete.appendChild(img)
@@ -803,12 +803,12 @@ export default {
                 const row = document.createElement('div')
                 const col =  document.createElement('div')
                 const col2 =  document.createElement('div')
-                inputdiv.className = 'col-sm-8 col-md-8 col-lg-8'
+                inputdiv.className = 'col-sm-12 col-md-12 col-lg-12'
                 inputdiv.id = 'customprops'
                 row.className = 'row'
                 row.id = numrows
-                col.className = 'col-sm-3 col-md-3 col-lg-3'
-                col2.className = 'col-sm-3 col-md-3 col-lg-3'
+                col.className = 'col-sm-6 col-md-6 col-lg-6'
+                col2.className = 'col-sm-6 col-md-6 col-lg-6'
                 div2append.appendChild(row)
 
                 const propname = document.createElement('input');
@@ -845,10 +845,10 @@ export default {
                   const rowcol = document.createElement('div');
                   const col1 = document.createElement('div');
                   const col2 = document.createElement('div');
-                  rowcol.className = 'col-sm-3 col-md-6 col-lg-6'
+                  rowcol.className = 'col-sm-12 col-md-12 col-lg-12'
                   row.className = 'row'
-                  col1.className = 'col-sm-3 col-md-3 col-lg-3'
-                  col2.className = 'col-sm-3 col-md-3 col-lg-3'
+                  col1.className = 'col-sm-6 col-md-6 col-lg-6'
+                  col2.className = 'col-sm-6 col-md-6 col-lg-6'
                   popup.classList.add('modal');
                   wrapper.appendChild(popup);
                   popup.textContent = text;
